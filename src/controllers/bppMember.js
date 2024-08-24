@@ -14,22 +14,15 @@ const createBppMember = async (req, res) => {
         voterIdNo,
         email,
         phoneNo,
-        address,
-        assemblyID,
     } = adBooking;
 
-
-    // let { voterIdFront, voterIdBack } = req.files;
 
     if (
       !firstName ||
       !lastName ||
       !fatherName ||
       !voterIdNo ||
-      !phoneNo ||
-      !address ||
-      !assemblyID 
-
+      !phoneNo
     ) {
       return res.status(400).json({ message: "All fields are required" });
     }
@@ -45,8 +38,6 @@ const createBppMember = async (req, res) => {
         voterIdNo,
         email,
         phoneNo,
-        address,
-        assemblyID,
     });
 
    

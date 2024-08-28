@@ -1,21 +1,26 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const user = require("./routes/userRoute");
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 const cors = require("cors");
 require("dotenv").config();
 
 
 const port = process.env.PORT || 3001;
-const user = require("./routes/userRoute");
-
-
-mongoose.set("strictQuery", true);
 const app = express();
-
-
-
 app.use(cors());
+
+
+
+
+
+
+
+app.use("/api/user", user);
+mongoose.set("strictQuery", true);
 app.use(express.json({ limit: "500mb" }));
-app.use("/api/v2/user", user);
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/status", (req, res) => {
   return res

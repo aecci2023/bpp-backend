@@ -1,10 +1,10 @@
-const clientModel = require("../models/clientModel");
+const userModel = require("../models/userModel");
 const dotenv = require("dotenv");
 dotenv.config();
 const { uploadToS3Bucket } = require("../utils/fileUpload");
 
 
-const folderName = "EmployeesDetails";
+const folderName = "UsersData";
 const createBppMember = async (req, res) => {
 
   const {
@@ -29,7 +29,7 @@ const createBppMember = async (req, res) => {
       return res.status(400).json({ message: "Both voter ID front and back are required" });
     }
 
-    const existingUser = await clientModel.findOne({ email: email });
+    const existingUser = await userModel.findOne({ email: email });
     if (existingUser) {
       return res.json({
         status: false,
@@ -68,7 +68,7 @@ const createBppMember = async (req, res) => {
     };
 
     // Create the new employee document in the database
-    const createdEmp = await clientModel.create(newEmployeeData);
+    const createdEmp = await userModel.create(newEmployeeData);
 
     res.status(200).json({
       status: true,

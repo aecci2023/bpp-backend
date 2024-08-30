@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const clientSchema = new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
@@ -26,28 +26,36 @@ const clientSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    address: {
+    state: {
       type: String,
       trim: true,
     },
-    assemblyID: {
+    city: {
+      type: String,
+      trim: true,
+    },
+    gender: {
+      type: String,
+      trim: true,
+    },
+    profession: {
+      type: String,
+      trim: true,
+    },
+    dob: { 
       type: String,
       trim: true,
     },
     voterIdFront: {
-      type: String, // or use Buffer if storing binary data directly
+      type: String, 
       default: null,
     },
     voterIdBack: {
-      type: String, // or use Buffer if storing binary data directly
+      type: String, 
       default: null,
-    },
-    userMessage: {
-      type: String,
-      trim: true,
     },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Client", clientSchema);
+module.exports = mongoose.model("User", userSchema);

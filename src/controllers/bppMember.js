@@ -41,40 +41,55 @@ const createBppMember = async (req, res) => {
       });
     }
 
-    let voterIdFront, voterIdBack;
-
-    if (req.files != null) {
-      if (Object.keys(req.files).length > 0) {
-        for (const key in req.files) {
-          let S3Response;
-          let userFileName = `${req.files[key].name}`;
-          let userFileData = req.files[key].data;
-
-          await uploadToS3Bucket(
-            folderName,
-            userFileName,
-            userFileData,
-            req.files[key].mimetype
-          ).then(async (data) => {
-            S3Response = data;
-            switch (key) {
-              case "voterIdFront":
-                voterIdFront = S3Response.Location;
-                break;
-
-              case "voterIdBack":
-                voterIdBack = S3Response.Location;
-                break;
-
-              default:
-                break;
-            }
-          });
-        }
-      }
+    // Ensure req.files exists and contains files
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "No files uploaded.",
+      });
     }
 
-    const existingUserByEmail = await userModel.findOne({ email: email });
+    let voterIdFront, voterIdBack;
+    const currentTimestamp = Date.now(); 
+
+    // Process each file and upload to S3
+    const uploadPromises = Object.keys(req.files).map(async (key) => {
+      const file = req.files[key];
+      
+      // Extract file extension
+      const fileExtension = file.name.split('.').pop();
+      
+      // Construct unique filename
+      const userFileName = `_${voterIdNo}_${firstName}_${lastName}_${key}_${currentTimestamp}.${fileExtension}`;
+      const userFileData = file.data;
+      const mimeType = file.mimetype;
+
+      try {
+        // Upload file to S3
+        const S3Response = await uploadToS3Bucket(
+          folderName,
+          userFileName,
+          userFileData,
+          mimeType
+        );
+
+        // Store the S3 URL based on the key
+        if (key === "voterIdFront") {
+          voterIdFront = S3Response.Location;
+        } else if (key === "voterIdBack") {
+          voterIdBack = S3Response.Location;
+        }
+      } catch (uploadError) {
+        console.error(`Error uploading ${key}:`, uploadError);
+        throw uploadError;
+      }
+    });
+
+    // Wait for all uploads to complete
+    await Promise.all(uploadPromises);
+
+    // Check for existing users by email or voter ID
+    const existingUserByEmail = await userModel.findOne({ email });
     if (existingUserByEmail) {
       return res.json({
         status: false,
@@ -82,9 +97,7 @@ const createBppMember = async (req, res) => {
       });
     }
 
-    const existingUserByVoterIdNo = await userModel.findOne({
-      voterIdNo: voterIdNo,
-    });
+    const existingUserByVoterIdNo = await userModel.findOne({ voterIdNo });
     if (existingUserByVoterIdNo) {
       return res.json({
         status: false,
@@ -92,6 +105,7 @@ const createBppMember = async (req, res) => {
       });
     }
 
+    // Create new BppMember
     const newBppMember = new userModel({
       firstName,
       lastName,
@@ -116,6 +130,7 @@ const createBppMember = async (req, res) => {
       data: newBppMember,
     });
   } catch (error) {
+    console.error('Error creating BppMember:', error);
     res.status(500).send({ status: false, message: error.message });
   }
 };

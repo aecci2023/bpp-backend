@@ -4,81 +4,119 @@ const AWS = require("aws-sdk");
 const { uploadToS3Bucket } = require("../utils/fileUpload");
 dotenv.config();
 
-
 const folderName = "UsersData";
+
 const createBppMember = async (req, res) => {
-  const { firstName, lastName, fatherName, voterIdNo, email, phoneNo, dob, gender, profession, state, city } =
-    req.body;
-
-  const { voterIdFront, voterIdBack } = req.files;
-
   try {
-    // Check if required fields are provided
-    if (!firstName || !lastName || !fatherName || !voterIdNo || !phoneNo || !dob || !gender || !profession || !state || !city ) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+    let bppMember = req.body;
+    let {
+      firstName,
+      lastName,
+      fatherName,
+      voterIdNo,
+      email,
+      phoneNo,
+      dob,
+      gender,
+      profession,
+      state,
+      city,
+    } = bppMember;
 
-    // Check if files are provided
-    if (!voterIdFront || !voterIdBack) {
-      return res
-        .status(400)
-        .json({ message: "Both voter ID front and back are required" });
-    }
-
-    const existingUser = await userModel.findOne({ email: email });
-    if (existingUser) {
-      return res.json({
+    if (
+      !firstName ||
+      !lastName ||
+      !fatherName ||
+      !voterIdNo ||
+      !phoneNo ||
+      !dob ||
+      !gender ||
+      !profession ||
+      !state ||
+      !city
+    ) {
+      return res.status(400).json({
         status: false,
-        message: "Request already submitted!",
+        message: "All fields are required.",
       });
     }
 
-    // Ensure file data exists
-    if (!voterIdFront[0] || !voterIdBack[0]) {
-      return res.status(400).json({ message: "File data is missing" });
+    let voterIdFront, voterIdBack;
+
+    if (req.files != null) {
+      if (Object.keys(req.files).length > 0) {
+        for (const key in req.files) {
+          let S3Response;
+          let userFileName = `${req.files[key].name}`;
+          let userFileData = req.files[key].data;
+
+          await uploadToS3Bucket(
+            folderName,
+            userFileName,
+            userFileData,
+            req.files[key].mimetype
+          ).then(async (data) => {
+            S3Response = data;
+            switch (key) {
+              case "voterIdFront":
+                voterIdFront = S3Response.Location;
+                break;
+
+              case "voterIdBack":
+                voterIdBack = S3Response.Location;
+                break;
+
+              default:
+                break;
+            }
+          });
+        }
+      }
     }
 
-    const voterIdFrontResult = await uploadToS3Bucket(
-      folderName,
-      firstName,
-      voterIdFront[0].buffer, // Use buffer for file data
-      voterIdFront[0].mimetype
-    );
-    const voterIdBackResult = await uploadToS3Bucket(
-      folderName,
-      firstName,
-      voterIdBack[0].buffer, // Use buffer for file data
-      voterIdBack[0].mimetype
-    );
+    const existingUserByEmail = await userModel.findOne({ email: email });
+    if (existingUserByEmail) {
+      return res.json({
+        status: false,
+        message: "Request already submitted with this email!",
+      });
+    }
 
-    // Create a new employee object with the uploaded image URLs
-    const newEmployeeData = {
+    const existingUserByVoterIdNo = await userModel.findOne({
+      voterIdNo: voterIdNo,
+    });
+    if (existingUserByVoterIdNo) {
+      return res.json({
+        status: false,
+        message: "Request already submitted with this Voter ID number!",
+      });
+    }
+
+    const newBppMember = new userModel({
       firstName,
       lastName,
       fatherName,
       email,
       phoneNo,
       voterIdNo,
-      dob, 
-      gender, 
-      profession, 
-      state, 
-      city, 
-      voterIdFront: voterIdFrontResult.Location,
-      voterIdBack: voterIdBackResult.Location,
-    };
+      dob,
+      gender,
+      profession,
+      state,
+      city,
+      voterIdFront,
+      voterIdBack,
+    });
 
-    // Create the new employee document in the database
-    const createdEmp = await userModel.create(newEmployeeData);
+    await newBppMember.save();
 
-    res.status(200).json({
+    res.status(201).json({
       status: true,
       message: "Thank You! Your request has been submitted!",
-      createdEmp,
+      data: newBppMember,
     });
   } catch (error) {
-    console.error("Error creating employee:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).send({ status: false, message: error.message });
   }
 };
 

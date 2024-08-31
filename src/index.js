@@ -1,30 +1,22 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const user = require("./routes/userRoute");
-const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() });
+const fileUpload = require("express-fileupload");
 const cors = require("cors");
+const http = require("http");
 require("dotenv").config();
-const bodyParser = require('body-parser');
 
+const user = require("./routes/userRoute");
 
 const port = process.env.PORT || 3001;
+mongoose.set("strictQuery", true);
 const app = express();
 app.use(cors());
-
-
-
-
-
-
-
-mongoose.set("strictQuery", true);
 app.use(express.json({ limit: "500mb" }));
-// app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json({ limit: '50mb' })); // Adjust as needed
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true })); 
+app.use(fileUpload());
+
 
 app.use("/api/user", user);
+
 app.get("/status", (req, res) => {
   return res
     .status(200)
@@ -32,11 +24,14 @@ app.get("/status", (req, res) => {
 });
 
 // MongoDB connection setup
-mongoose.connect(process.env.MONGODB_URI, {
-  useUnifiedTopology: true,
-})
-.then(() => console.log("Connected to MongoDB"))
-.catch((err) => console.error("Failed to connect to MongoDB", err));
+mongoose
+  .connect(process.env.MONGODB_URI, { useNewUrlParser: true })
+  .then(() => {
+    console.log("MongoDB is connected");
+  })
+  .catch((err) => {
+    console.log(err.message);
+  });
 
 
 

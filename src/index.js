@@ -6,16 +6,21 @@ const http = require("http");
 require("dotenv").config();
 
 const user = require("./routes/userRoute");
-const auth = require("./routes/MasterauthRoute")
+const auth = require("./routes/MasterauthRoute");
+
+const app = express();  // Initialize express app
 
 const port = process.env.PORT || 3001;
-mongoose.set("strictQuery", true);
-const app = express();
+mongoose.set("strictQuery", true);  // Set Mongoose query options
+
+// Enable CORS for all requests
 app.use(cors());
+
+// Middleware setup
 app.use(express.json({ limit: "500mb" }));
 app.use(fileUpload());
 
-
+// Route setup
 app.use("/api/user", user);
 app.use("/api/auth", auth);
 
@@ -27,7 +32,7 @@ app.get("/status", (req, res) => {
 
 // MongoDB connection setup
 mongoose
-  .connect(process.env.MONGODB_URI, { useNewUrlParser: true })
+  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log("MongoDB is connected");
   })
@@ -35,8 +40,7 @@ mongoose
     console.log(err.message);
   });
 
-
-
+// Start the server
 app.listen(port, () => {
   console.log(`App is running on port ${port}`);
 });

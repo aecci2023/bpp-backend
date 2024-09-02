@@ -91,21 +91,21 @@ const createBppMember = async (req, res) => {
     await Promise.all(uploadPromises);
 
     // Check for existing users by email or voter ID
-    const existingUserByEmail = await userModel.findOne({ email });
-    if (existingUserByEmail) {
-      return res.json({
-        status: false,
-        message: "Request already submitted with this email!",
-      });
-    }
+    // const existingUserByEmail = await userModel.findOne({ email });
+    // if (existingUserByEmail) {
+    //   return res.json({
+    //     status: false,
+    //     message: "Request already submitted with this email!",
+    //   });
+    // }
 
-    const existingUserByVoterIdNo = await userModel.findOne({ voterIdNo });
-    if (existingUserByVoterIdNo) {
-      return res.json({
-        status: false,
-        message: "Request already submitted with this Voter ID number!",
-      });
-    }
+    // const existingUserByVoterIdNo = await userModel.findOne({ voterIdNo });
+    // if (existingUserByVoterIdNo) {
+    //   return res.json({
+    //     status: false,
+    //     message: "Request already submitted with this Voter ID number!",
+    //   });
+    // }
 
     // Create new BppMember
     const newBppMember = new userModel({

@@ -28,7 +28,7 @@ const createBppMember = async (req, res) => {
       !lastName ||
       !fatherName ||
       !voterIdNo ||
-      !phoneNo ||
+      // !phoneNo ||
       !dob ||
       !gender ||
       !profession ||

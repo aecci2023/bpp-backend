@@ -18,7 +18,9 @@ app.use(cors());
 
 // Middleware setup
 app.use(express.json({ limit: "500mb" }));
-app.use(fileUpload());
+app.use(fileUpload({
+  limits: { fileSize: 100 * 1024 * 1024 } 
+}));
 
 // Route setup
 app.use("/api/user", user);

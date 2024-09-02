@@ -21,6 +21,7 @@ const createBppMember = async (req, res) => {
       profession,
       state,
       city,
+      district,
     } = bppMember;
 
     if (
@@ -33,7 +34,8 @@ const createBppMember = async (req, res) => {
       !gender ||
       !profession ||
       !state ||
-      !city
+      !city ||
+      !district
     ) {
       return res.status(400).json({
         status: false,
@@ -118,6 +120,7 @@ const createBppMember = async (req, res) => {
       profession,
       state,
       city,
+      district,
       voterIdFront,
       voterIdBack,
     });

@@ -140,16 +140,37 @@ const createBppMember = async (req, res) => {
 
 const getBppMember = async (req, res) => {
   try {
-    let getAllData = await userModel.find({});
-    if (getAllData.length === 0)
+    // Extract pagination values from query parameters (or set defaults)
+    const offset = parseInt(req.query.offset) || 0;
+    const limit = parseInt(req.query.limit) || 10;
+
+    // Get the total count of users for pagination
+    const totalUsers = await userModel.countDocuments({});
+
+    // Fetch data with pagination (using offset and limit)
+    const getAllData = await userModel.find({})
+      .skip(offset)
+      .limit(limit);
+
+    // Check if no data was found
+    if (getAllData.length === 0) {
       return res.status(400).send({ status: false, message: "No data found" });
-    res
-      .status(200)
-      .send({ status: true, message: "here's the data", data: getAllData });
+    }
+
+    // Send the structured response with pagination metadata
+    res.status(200).send({
+      status: true,
+      message: "Sample data for testing and learning purposes",
+      total_users: totalUsers,
+      offset: offset,
+      limit: limit,
+      users: getAllData
+    });
   } catch (err) {
     return res.status(500).send({ status: false, message: err.message });
   }
 };
+
 
 module.exports = {
   createBppMember,

@@ -140,28 +140,53 @@ const createBppMember = async (req, res) => {
 
 const getBppMember = async (req, res) => {
   try {
-    // Extract pagination values from query parameters (or set defaults)
+    // Extract pagination values and search query from query parameters
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
 
-    // Get the total count of users for pagination
-    const totalUsers = await userModel.countDocuments({});
+    // Build the search condition for voterIdNo
+    const searchCondition = search ? { voterIdNo: search } : {};
 
-    // Fetch data with pagination (using offset and limit)
-    const getAllData = await userModel.find({})
+    // Get the total count of users overall
+    const totalUsers = await userModel.countDocuments({ ...searchCondition });
+
+    // Get the count of users for the current month
+    const currentMonthCount = await userModel.countDocuments({
+      ...searchCondition,
+      createdAt: {
+        $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+        $lt: new Date()
+      }
+    });
+
+    // Get the count of users for the previous month
+    const previousMonthCount = await userModel.countDocuments({
+      ...searchCondition,
+      createdAt: {
+        $gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
+        $lt: new Date(new Date().getFullYear(), new Date().getMonth(), 0)
+      }
+    });
+
+    // Fetch data for the current request based on offset and limit
+    const getAllData = await userModel.find(searchCondition)
       .skip(offset)
-      .limit(limit);
+      .limit(limit)
+      // .select('firstName lastName voterIdNo gender'); // Ensure these fields are selected
 
     // Check if no data was found
     if (getAllData.length === 0) {
       return res.status(400).send({ status: false, message: "No data found" });
     }
 
-    // Send the structured response with pagination metadata
+    // Send response with user data and counts
     res.status(200).send({
       status: true,
       message: "Sample data for testing and learning purposes",
       total_users: totalUsers,
+      current_month_users: currentMonthCount,
+      previous_month_users: previousMonthCount,
       offset: offset,
       limit: limit,
       users: getAllData
@@ -170,6 +195,7 @@ const getBppMember = async (req, res) => {
     return res.status(500).send({ status: false, message: err.message });
   }
 };
+
 
 
 module.exports = {
